@@ -51,7 +51,7 @@ def bar2 := (λ a, (λ x : a, x)) nat -- to illustrate, this is ok.
 
 
 /-
-  Question 3.
+  Exercise 3.
     Above, we used the example vec α n for vectors of elements of type α of length n. 
     Declare a constant vec_add that could represent a function that adds two vectors 
     of natural numbers of the same length, and a constant vec_reverse that can represent 
@@ -81,7 +81,7 @@ variable v3 : vec ℕ 3
 
 
 /-
-  Question 4.
+  Exercise 4.
     Similarly, declare a constant matrix so that matrix α m n could represent 
     the type of m by n matrices. Declare some constants to represent functions on 
     this type, such as matrix addition and multiplication, and (using vec) multiplication 
