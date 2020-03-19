@@ -7,14 +7,14 @@ variables p q r : Prop
 
 -- commutativity of ∧ and ∨
 
-example : p ∧ q ↔ q ∧ p := 
+theorem and_com {p q : Prop} : p ∧ q ↔ q ∧ p := 
 iff.intro
   (assume h : p ∧ q,
     show q ∧ p, from ⟨ h.right, h.left ⟩)
   (assume h : q ∧ p,
     show p ∧ q, from ⟨ h.right, h.left ⟩)
   
-example : p ∨ q ↔ q ∨ p :=
+theorem or_com {p q : Prop} : p ∨ q ↔ q ∨ p :=
 iff.intro
   (assume h : p ∨ q,
     h.elim
@@ -27,14 +27,14 @@ iff.intro
 
 -- associativity of ∧ and ∨
 
-example : (p ∧ q) ∧ r ↔ p ∧ (q ∧ r) :=
+theorem and_ass {p q r : Prop} : (p ∧ q) ∧ r ↔ p ∧ (q ∧ r) :=
 iff.intro
   (assume h : (p ∧ q) ∧ r,
     show p ∧ (q ∧ r), from ⟨ h.left.left, ⟨ h.left.right, h.right ⟩ ⟩)
   (assume h : p ∧ (q ∧ r),
     show (p ∧ q) ∧ r, from ⟨ ⟨ h.left, h.right.left ⟩, h.right.right ⟩)
 
-example : (p ∨ q) ∨ r ↔ p ∨ (q ∨ r) :=
+theorem or_ass {p q r : Prop} : (p ∨ q) ∨ r ↔ p ∨ (q ∨ r) :=
 iff.intro
   (assume h : (p ∨ q) ∨ r,
     h.elim
@@ -98,7 +98,7 @@ iff.intro
 
 -- other properties
 
-example : (p → (q → r)) ↔ (p ∧ q → r) :=
+theorem exportation {p q r : Prop} : (p → (q → r)) ↔ (p ∧ q → r) :=
 iff.intro
   (assume (h₁ : (p → q → r)) (h₂ : p ∧ q),
     show r, from h₁ h₂.left h₂.right)
@@ -128,8 +128,7 @@ h₁.elim
   (assume hnp : ¬p, absurd h₂.left hnp)
   (assume hnq : ¬q, absurd h₂.right hnq)
 
--- nonabsurdity
-example : ¬(p ∧ ¬p) := 
+theorem nonabsurdity : ¬(p ∧ ¬p) := 
 assume h : p ∧ ¬p,
 absurd h.left h.right
 
@@ -137,12 +136,13 @@ example : p ∧ ¬q → ¬(p → q) :=
 assume (h₁ : p ∧ ¬q) (h₂ : p → q),
 absurd (h₂ h₁.left) h₁.right
 
--- explosion
-example : ¬p → (p → q) := 
+-- principle of explosion
+theorem explosion : ¬p → (p → q) := 
 assume (hnp : ¬p) (hp : p),
 absurd hp hnp
 
-example : (¬p ∨ q) → (p → q) := 
+-- material implication
+theorem mat_impl_right {p q : Prop} : (¬p ∨ q) → (p → q) := 
 assume (h : ¬p ∨ q) (hp : p),
 h.elim
   (assume hnp : ¬p, absurd hp hnp)
@@ -164,7 +164,7 @@ open classical
 
 example : ¬(p ↔ ¬p) := 
 assume h,
-or.elim (em p)
+(em p).elim
   (assume hp : p,
     show false, from absurd hp (h.mp hp))
   (assume hnp : ¬p,
@@ -174,3 +174,92 @@ example : (p → q) → (¬q → ¬p) :=
 assume (hpq : p → q) (hnq : ¬q) (hp : p),
 show false, from hnq (hpq hp)
 
+
+
+/-
+  Exercise 2.
+    Prove the following identities, replacing the “sorry” placeholders with actual proofs.
+    These require classical reasoning.
+-/
+
+open classical
+
+theorem mat_impl_left {p q : Prop} : (p → q) → (¬p ∨ q) :=
+assume h : p → q,
+by_cases
+  (assume hp : p,
+    or.inr (h hp))
+  (assume hnp : ¬p,
+    or.inl hnp)
+
+example : (p → q ∨ r) → ((p → q) ∨ (p → r)) :=
+assume h : p → q ∨ r,
+have h₁ : ¬p ∨ (q ∨ r), from mat_impl_left h,
+have h₂ : (¬p ∨ q) ∨ r, from or_ass.elim_right h₁,
+have h₃ : r ∨ (¬p ∨ q), from or_com.elim_left h₂,
+have h₄ : ¬p ∨ (r ∨ (¬p ∨ q)), from or.inr h₃,
+have h₅ : (¬p ∨ r) ∨ (¬p ∨ q), from or_ass.elim_right h₄,
+h₅.elim
+  (assume hh : (¬p ∨ r),
+    have ha : p → r, from mat_impl_right hh,
+    or.inr ha)
+  (assume hh : (¬p ∨ q),
+    have ha : p → q, from mat_impl_right hh,
+    or.inl ha)
+
+theorem demorgans_4 {p q : Prop} : ¬(p ∧ q) → ¬p ∨ ¬q :=
+assume h : ¬(p ∧ q),
+by_cases
+  (assume hp : p, by_cases
+    (assume hq : q, absurd (and.intro hp hq) h)
+    (assume hnq : ¬q, or.inr hnq))
+  (assume hnp : ¬p, or.inl hnp)
+
+theorem dne {p : Prop} (h : ¬¬p) : p :=
+or.elim (em p)
+  (assume hp : p, hp)
+  (assume hnp : ¬p, absurd hnp h)
+
+-- probably could use mat_impl_left and demorgans
+theorem mat_impl_neg_left {p q : Prop} : ¬(p → q) → p ∧ ¬q :=
+assume h : ¬(p → q),
+by_contradiction
+  (assume hc : ¬(p ∧ ¬q),
+    have h₁ : ¬p ∨ ¬¬q, from demorgans_4 hc,
+    have h₂ : ¬p ∨ q, from h₁.elim
+      (assume g : ¬p, or.inl g)
+      (assume g : ¬¬q, or.inr (dne g)),
+    have h₃ : p → q, from mat_impl_right h₂,
+    show false, from h h₃)
+
+-- example : (p → q) → (¬p ∨ q) := sorry -- proved above as theorem mat_impl_left
+
+example : (¬q → ¬p) → (p → q) :=
+assume (h : ¬q → ¬p) (hp : p),
+by_cases
+  (assume hq : q, hq)
+  (assume hnq : ¬q, absurd hp (h hnq))
+
+example : p ∨ ¬p := em p
+
+-- Peirce's law
+example : (((p → q) → p) → p) :=
+assume h : (p → q) → p,
+by_cases
+  (assume hc : p → q, h hc)
+  (assume hc : ¬(p → q),
+    have h₁ : p ∧ ¬q, from mat_impl_neg_left hc,
+    h₁.left)
+
+/-
+  Exercise 3.
+    Prove ¬(p ↔ ¬p) without using classical logic.
+-/
+
+example : ¬(p ↔ ¬p) :=
+assume h,
+have h₁ : p → ¬p, from h.elim_left,
+have h₂ : ¬p → p, from h.elim_right,
+have h₃ : ¬(p ∧ p), from exportation.elim_left h₁,
+have hnp : ¬p, from sorry, -- so close...
+absurd (h₂ hnp) hnp
